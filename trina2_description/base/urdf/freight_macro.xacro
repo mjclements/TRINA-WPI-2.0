@@ -2,26 +2,27 @@
 
 <robot name="freight" xmlns:xacro="http://www.ros.org/wiki/xacro">
   
-  <xacro:macro name="load_base" params="ns">
+  <xacro:macro name="load_base" params="prefix">
 
       <!-- <xacro:include filename="$(find fetch_description)/robots/freight.urdf.xacro" /> -->
       <xacro:include filename="$(find trina2_description)/base/urdf/freight.urdf.xacro" />
-    
+      <xacro:load_base_urdf prefix="${prefix}"/>
+
       <!-- Base is modeled as a big tub sitting on floor, with two wheels -->
-      <gazebo reference="chassis_link">
+      <gazebo reference="${prefix}chassis_link">
         <kp>10000000.0</kp>
         <kd>1.0</kd>
         <mu1>0.01</mu1>
         <mu2>0.01</mu2>
       </gazebo>
-      <gazebo reference="r_wheel_link">
+      <gazebo reference="${prefix}r_wheel_link">
         <kp>10000000.0</kp>
         <kd>1.0</kd>
         <mu1>0.8</mu1>
         <mu2>0.8</mu2>
         <material>Gazebo/Black</material>
       </gazebo>
-      <gazebo reference="l_wheel_link">
+      <gazebo reference="${prefix}l_wheel_link">
         <kp>10000000.0</kp>
         <kd>1.0</kd>
         <mu1>0.8</mu1>
@@ -29,21 +30,21 @@
         <material>Gazebo/Black</material>
       </gazebo>
       <!-- Color the estop -->
-      <gazebo reference="estop_link">
+      <gazebo reference="${prefix}estop_link">
         <material>Gazebo/Red</material>
       </gazebo>
-      <gazebo reference="l_wheel_joint">
+      <gazebo reference="${prefix}l_wheel_joint">
         <implicitSpringDamper>1</implicitSpringDamper>
       </gazebo>
-      <gazebo reference="r_wheel_joint">
+      <gazebo reference="${prefix}r_wheel_joint">
         <implicitSpringDamper>1</implicitSpringDamper>
       </gazebo>
-      <gazebo reference="camera_support">
+      <gazebo reference="${prefix}camera_support">
         <material>Gazebo/Black</material>
       </gazebo>
 
       <!-- SICK TIM561 (25m Range) -->
-      <gazebo reference="laser_link">
+      <gazebo reference="${prefix}laser_link">
       <!-- <gazebo reference="laser_link">   <! TEMPORARY FIX -->
         <sensor type="ray" name="base_laser">
           <pose>0 0 0 0 0 0</pose>

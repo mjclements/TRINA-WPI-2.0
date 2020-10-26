@@ -45,9 +45,12 @@ This repository has been developed and tested in Ubuntu 18.04 and ROS Melodic on
   - `sudo apt-get install ros-melodic-teleop-twist-joy`
   - `sudo apt-get install ros-melodic-joystick_drivers`
 
-- `gmapping`,`amcl` and `move_base`: ROS SLAM, localization and navigation package
+- `gmapping`, `amcl` and `move_base`: ROS SLAM, localization and navigation package
 
-  These three packages are installed by default
+  - `sudo apt-get install ros-melodic-map-server`
+  - `sudo apt-get install ros-melodic-gmapping`
+  - `sudo apt-get install ros-melodic-amcl`
+  - `sudo apt-get install ros-melodic-move-base`
   
 - If you need to use or develop graphical user interface, a visual interface for navigation is built based on Qt5. 
 

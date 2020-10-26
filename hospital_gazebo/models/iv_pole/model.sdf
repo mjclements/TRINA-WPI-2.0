@@ -20,7 +20,7 @@
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>model://iv_pole/iv_pole.dae</uri>
+            <uri>model://iv_pole/iv_pole_collision.dae</uri>
           </mesh>
         </geometry>
       </collision>

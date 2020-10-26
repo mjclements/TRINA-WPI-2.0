@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: trina2_description
+    relative_path: robots/urdf/trina2.xacro
+    xacro_args: arm:=gen3 dof:=7 vision:=true gripper:=robotiq_2f_85 sim:=true
+  SRDF:
+    relative_path: config/trina2.srdf
+  CONFIG:
+    author_name: ZhuoyunZhong
+    author_email: zzhong3@wpi.edu
+    generated_timestamp: 1603616677

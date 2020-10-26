@@ -2,7 +2,7 @@
 <sdf version="1.5">
 
   <model name="chairs_and_table">
-    <static>false</static>
+    <static>true</static>
     <link name="link">
 
       <inertial>
@@ -20,7 +20,7 @@
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>model://chairs_and_table/chairs_and_table.dae</uri>
+            <uri>model://chairs_and_table/chairs_and_table_collision.dae</uri>
           </mesh>
         </geometry>
       </collision>

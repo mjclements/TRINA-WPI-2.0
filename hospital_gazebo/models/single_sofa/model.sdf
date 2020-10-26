@@ -2,7 +2,7 @@
 <sdf version="1.5">
 
   <model name="single_sofa">
-    <static>false</static>
+    <static>true</static>
     <link name="link">
 
       <inertial>
@@ -18,10 +18,11 @@
       </inertial>
 
       <collision name="collision">
+        <pose>0 0.07 0.39 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://single_sofa/single_sofa.dae</uri>
-          </mesh>
+          <box> 
+            <size>0.93 0.738 0.78</size>
+          </box>
         </geometry>
       </collision>
 

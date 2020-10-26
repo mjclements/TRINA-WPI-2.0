@@ -20,7 +20,7 @@
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>model://service_cart/service_cart.dae</uri>
+            <uri>model://service_cart/service_cart_collision.dae</uri>
           </mesh>
         </geometry>
       </collision>

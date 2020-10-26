@@ -2,12 +2,11 @@
 
 <robot name="main_camera" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <xacro:macro name="load_arm_camera" params="ns prefix arm_camera_base
-                                                color_fov:=69.4 color_w:=1920 color_h:=1080 
-                                                depth_fov:=85.2 depth_w:=1280 depth_h:=720
+    <xacro:macro name="load_arm_camera" params="prefix camera_name arm_camera_base
+                                                fov:=69.4 width:=1920 height:=1080 
                                                 update_rate:=60 wide_flag:=true">
         
-        <link name="${prefix}camera_support">
+        <link name="${prefix}support">
             <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
@@ -31,17 +30,17 @@
             </inertial>
         </link>
 
-        <joint name="${prefix}camera_support_joint" type="fixed">
+        <joint name="${prefix}support_joint" type="fixed">
             <parent link="${arm_camera_base}"/>
-            <child link="${prefix}camera_support"/>
+            <child link="${prefix}support"/>
             <origin xyz="0 0 0" rpy="0 -1.57 1.57"/>
             <axis xyz="0 0 1"/>
         </joint>
 
         <xacro:include filename="$(find trina2_description)/camera/urdf/_d435.urdf.xacro"/>
-        <xacro:sensor_d435 name="${prefix}cam" topics_ns="${prefix}cam" parent="${prefix}camera_support"
-                           color_fov="${color_fov}" color_w="${color_w}" color_h="${color_h}"
-                           depth_fov="${depth_fov}" depth_w="${depth_w}" depth_h="${depth_h}"
+        <xacro:sensor_d435 name="${camera_name}" prefix="${prefix}"
+                           parent="${prefix}support"
+                           fov="${fov}" width="${width}" height="${height}"
                            update_rate="${update_rate}" wide_flag="${wide_flag}">
             <origin xyz="0.0 0.0 0.0" rpy="0 0 0" /> 
         </xacro:sensor_d435>
