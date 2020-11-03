@@ -3,7 +3,7 @@
 
 // ROS
 #include <ros/ros.h>
-
+#include <ros/console.h>
 // MoveIt
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 #include <moveit/move_group_interface/move_group_interface.h>
@@ -11,83 +11,60 @@
 // TF2
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
+static const std::string PLANNING_GROUP = "left_arm";
+static const std::string GRIPPER_GROUP = "left_gripper";
+
 void openGripper(trajectory_msgs::JointTrajectory& posture)
 {
-  // BEGIN_SUB_TUTORIAL open_gripper
-  /* Add all joints of right gripper move group. 
-   * Need to check whether passive joints should be included here or if
-   * I should only be setting the "right_arm_finger_joint"
-   * */
-  posture.joint_names.resize(11);
-  posture.joint_names[0] = "right_arm_gripper_base_joint";
-  posture.joint_names[1] = "right_arm_finger_joint";
-  posture.joint_names[2] = "right_arm_left_outer_finger_joint";
-  posture.joint_names[3] = "right_arm_left_inner_finger_joint";
-  posture.joint_names[4] = "right_arm_left_inner_finger_pad_joint";
-  posture.joint_names[5] = "right_arm_left_inner_knuckle_joint";
-  posture.joint_names[6] = "right_arm_right_inner_knuckle_joint";
-  posture.joint_names[7] = "right_arm_right_outer_knuckle_joint";
-  posture.joint_names[8] = "right_arm_right_outer_finger_joint";
-  posture.joint_names[9] = "right_arm_right_inner_finger_joint";
-  posture.joint_names[10] = "right_arm_right_inner_finger_pad_joint";
 
-  /* Set them as open, wide enough for the object to fit. */
+  // Add all joints of right gripper move group. 
+
+  posture.joint_names.resize(6);
+  posture.joint_names[0] = "trina2_1/left_arm_finger_joint";
+  posture.joint_names[1] = "trina2_1/left_arm_left_inner_finger_joint";
+  posture.joint_names[2] = "trina2_1/left_arm_left_inner_knuckle_joint";
+  posture.joint_names[3] = "trina2_1/left_arm_right_inner_knuckle_joint";
+  posture.joint_names[4] = "trina2_1/left_arm_right_outer_knuckle_joint";
+  posture.joint_names[5] = "trina2_1/left_arm_right_inner_finger_joint";
+
+  // Set them as open. 
   posture.points.resize(1);
-  posture.points[0].positions.resize(11);
+  posture.points[0].positions.resize(6);
   posture.points[0].positions[0] = 0.00;
   posture.points[0].positions[1] = 0.00;
   posture.points[0].positions[2] = 0.00;
   posture.points[0].positions[3] = 0.00;
   posture.points[0].positions[4] = 0.00;
   posture.points[0].positions[5] = 0.00;
-  posture.points[0].positions[6] = 0.00;
-  posture.points[0].positions[7] = 0.00;
-  posture.points[0].positions[8] = 0.00;
-  posture.points[0].positions[9] = 0.00;
-  posture.points[0].positions[10] = 0.00;
   posture.points[0].time_from_start = ros::Duration(0.5);
-  // END_SUB_TUTORIAL
+
 }
 
 void closedGripper(trajectory_msgs::JointTrajectory& posture)
 {
-  // BEGIN_SUB_TUTORIAL closed_gripper
-  /* Add all joints of right gripper move group. 
-   * Need to check whether passive joints should be included here or if
-   * I should only be setting the "right_arm_finger_joint"
-   */
-
-  posture.joint_names.resize(11);
-  posture.joint_names[0] = "right_arm_gripper_base_joint";
-  posture.joint_names[1] = "right_arm_finger_joint";
-  posture.joint_names[2] = "right_arm_left_outer_finger_joint";
-  posture.joint_names[3] = "right_arm_left_inner_finger_joint";
-  posture.joint_names[4] = "right_arm_left_inner_finger_pad_joint";
-  posture.joint_names[5] = "right_arm_left_inner_knuckle_joint";
-  posture.joint_names[6] = "right_arm_right_inner_knuckle_joint";
-  posture.joint_names[7] = "right_arm_right_outer_knuckle_joint";
-  posture.joint_names[8] = "right_arm_right_outer_finger_joint";
-  posture.joint_names[9] = "right_arm_right_inner_finger_joint";
-  posture.joint_names[10] = "right_arm_right_inner_finger_pad_joint";
-
+ // Add all joints of the left gripper move group - make these generic later
+  posture.joint_names.resize(6);
+  posture.joint_names[0] = "trina2_1/left_arm_finger_joint";
+  posture.joint_names[1] = "trina2_1/left_arm_left_inner_finger_joint";
+  posture.joint_names[2] = "trina2_1/left_arm_left_inner_knuckle_joint";
+  posture.joint_names[3] = "trina2_1/left_arm_right_inner_knuckle_joint";
+  posture.joint_names[4] = "trina2_1/left_arm_right_outer_knuckle_joint";
+  posture.joint_names[5] = "trina2_1/left_arm_right_inner_finger_joint";
   /* Set them as closed. */
   posture.points.resize(1);
-  posture.points[0].positions.resize(11);
-  posture.points[0].positions[0] = 0.00;
+  posture.points[0].positions.resize(6);
+  posture.points[0].positions[0] = 0.8;
   posture.points[0].positions[1] = 0.8;
   posture.points[0].positions[2] = 0.00;
   posture.points[0].positions[3] = 0.00;
   posture.points[0].positions[4] = 0.00;
   posture.points[0].positions[5] = 0.00;
-  posture.points[0].positions[6] = 0.00;
-  posture.points[0].positions[7] = 0.00;
-  posture.points[0].positions[8] = 0.00;
-  posture.points[0].positions[9] = 0.00;
-  posture.points[0].positions[10] = 0.00;
   posture.points[0].time_from_start = ros::Duration(0.5);
-  // END_SUB_TUTORIAL
+
 }
 
+// Currently this routine creates one grasp to try.  We will need to adapt this for the optimal grasp of a 
+// cube to use in stacking/ manipulation.  We may create additional grasps later.
 void pick(moveit::planning_interface::MoveGroupInterface& move_group)
 {
   // BEGIN_SUB_TUTORIAL pick1
@@ -148,6 +125,7 @@ void pick(moveit::planning_interface::MoveGroupInterface& move_group)
   // END_SUB_TUTORIAL
 }
 
+// Again, tries a single placement location.  We can use this list to create "failures" in place actions.
 void place(moveit::planning_interface::MoveGroupInterface& group)
 {
   // BEGIN_SUB_TUTORIAL place
@@ -200,6 +178,9 @@ void place(moveit::planning_interface::MoveGroupInterface& group)
   // END_SUB_TUTORIAL
 }
 
+// This routine (shamelessly stolen from the MoveIt tutorials) creates collision objects for the robot
+// to interact with in RViz.  We will need to create "real" objects in Gazebo and figure out how to interact 
+// with those instead, but this works well for testing manipulation.
 void addCollisionObjects(moveit::planning_interface::PlanningSceneInterface& planning_scene_interface)
 {
   // BEGIN_SUB_TUTORIAL table1
@@ -278,6 +259,25 @@ void addCollisionObjects(moveit::planning_interface::PlanningSceneInterface& pla
   planning_scene_interface.applyCollisionObjects(collision_objects);
 }
 
+// Demo function to try moving the arm manually
+void test_moveit(moveit::planning_interface::MoveGroupInterface& group) {
+  moveit::core::RobotStatePtr current_state = group.getCurrentState();
+  std::vector<double> joint_group_positions;
+  const moveit::core::JointModelGroup* joint_model_group = group.getCurrentState()->getJointModelGroup(PLANNING_GROUP);
+  current_state->copyJointGroupPositions(joint_model_group, joint_group_positions);
+  moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+  joint_group_positions[0] = joint_group_positions[0] - 0.3;  // radians
+  group.setJointValueTarget(joint_group_positions);
+  bool success = (group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+  ROS_INFO_NAMED("tutorial", "Visualizing plan 2 (joint space goal) %s", success ? "" : "FAILED");
+  if (success) {
+    success = (group.execute(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+  }
+  ROS_INFO_NAMED("tutorial", "Executing plan (joint space goal) %s", success ? "" : "FAILED");
+  std::vector< std::string > remembered = group.getNamedTargets();
+  std::cout << remembered.front();
+}
+
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "trina_pick_place");
@@ -285,10 +285,30 @@ int main(int argc, char** argv)
   ros::AsyncSpinner spinner(1);
   spinner.start();
 
+
   ros::WallDuration(1.0).sleep();
   moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
-  moveit::planning_interface::MoveGroupInterface group("right_arm"); // need prefix?
-  group.setPlanningTime(45.0);
+  moveit::planning_interface::MoveGroupInterface arm_group(PLANNING_GROUP); // make generic later
+  arm_group.setPlanningTime(45.0);
+
+
+  // Diagnostics - remove later
+  if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+    ros::console::notifyLoggerLevelsChanged();
+  }
+  // moveit::planning_interface::MoveGroupInterface grip_group(GRIPPER_GROUP);
+  // grip_group.setPlanningTime(45.0);
+  // ROS_INFO_NAMED("tutorial", "Planning frame: %s", arm_group.getPlanningFrame().c_str());
+  // ROS_INFO_NAMED("tutorial", "End effector link: %s", arm_group.getEndEffectorLink().c_str());
+  // ROS_INFO_NAMED("tutorial", "Available Planning Groups:");
+  // std::copy(arm_group.getJointModelGroupNames().begin(), arm_group.getJointModelGroupNames().end(),
+  //         std::ostream_iterator<std::string>(std::cout, ", "));
+  // ROS_INFO_NAMED("tutorial", "Joints in gripper:");
+  // std::copy(grip_group.getJointNames().begin(), grip_group.getJointNames().end(),
+  //         std::ostream_iterator<std::string>(std::cout, ", "));
+  //test_moveit(arm_group);
+  ros::WallDuration(1.0).sleep();
+
 
   // TODO: Create a service that can be called by a button click, then loop.  
   addCollisionObjects(planning_scene_interface);
@@ -296,11 +316,11 @@ int main(int argc, char** argv)
   // Wait a bit for ROS things to initialize
   ros::WallDuration(1.0).sleep();
 
-  pick(group);
+  pick(arm_group);
 
   ros::WallDuration(1.0).sleep();
 
-  place(group);
+  place(arm_group);
 
   ros::waitForShutdown();
   return 0;
