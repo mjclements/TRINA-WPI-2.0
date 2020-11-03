@@ -2,7 +2,7 @@
 <sdf version="1.5">
 
   <model name="human_male_nathan">
-    <static>false</static>
+    <static>true</static>
     <link name="link">
 
       <inertial>
@@ -20,7 +20,7 @@
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>model://human_male_nathan/human_male_nathan.dae</uri>
+            <uri>model://human_male_nathan/human_male_nathan_collision.dae</uri>
           </mesh>
         </geometry>
       </collision>

@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <sdf version="1.5">
 
-  <model name="travel_bag">
+  <model name="hospital_bed">
     <static>false</static>
     <link name="link">
 
@@ -20,7 +20,7 @@
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>model://hospital_bed/hospital_bed.dae</uri>
+            <uri>model://hospital_bed/hospital_bed_collision.dae</uri>
           </mesh>
         </geometry>
       </collision>

@@ -2,7 +2,7 @@
 <sdf version="1.5">
 
   <model name="human_female_mei">
-    <static>false</static>
+    <static>true</static>
     <link name="link">
 
       <inertial>
@@ -20,7 +20,7 @@
       <collision name="collision">
         <geometry>
           <mesh>
-            <uri>model://human_female_mei/human_female_mei.dae</uri>
+            <uri>model://human_female_mei/human_female_mei_collision.dae</uri>
           </mesh>
         </geometry>
       </collision>

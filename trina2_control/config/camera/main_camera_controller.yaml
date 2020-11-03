@@ -1,13 +1,13 @@
-main_camera_pitch_controller:
-    joint: main_camera_pitch_joint
+main_cam_pitch_controller:
+    joint: $(arg prefix)main_cam_pitch_joint
     pid:
         p: 100.0
         i: 0.0
         d: 5.0
     type: effort_controllers/JointPositionController
 
-main_camera_yaw_controller:
-    joint: main_camera_yaw_joint
+main_cam_yaw_controller:
+    joint: $(arg prefix)main_cam_yaw_joint
     pid:
         p: 100.0
         i: 0.0
