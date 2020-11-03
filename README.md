@@ -1,4 +1,7 @@
 # TRINA-WPI-2.0
+This branch is a place for Lisa to work on adding objects to manipulate in the world.
+
+
 WPI HIRO Lab TRINA 2.0 ROS packages. This nursing robot comprises the Intel realsense cameras, Kinova robot arms and Fetch freight robot base.
 
 ![image](demo/TRINA-WPI-2.0.png)
