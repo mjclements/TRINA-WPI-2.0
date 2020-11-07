@@ -139,6 +139,11 @@ include_directories(
 add_executable(pick_and_place src/pick_and_place.cpp)
 target_link_libraries(pick_and_place ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 install(TARGETS pick_and_place DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+add_executable(state_machine src/state_machine.cpp)
+target_link_libraries(state_machine ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+install(TARGETS state_machine DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
