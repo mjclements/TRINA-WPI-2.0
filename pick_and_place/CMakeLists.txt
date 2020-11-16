@@ -144,6 +144,14 @@ add_executable(state_machine src/state_machine.cpp)
 target_link_libraries(state_machine ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 install(TARGETS state_machine DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
+add_executable(init_blocks src/init_blocks.cpp)
+target_link_libraries(init_blocks ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+install(TARGETS init_blocks DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+add_executable(arm_to_block src/arm_to_block.cpp)
+target_link_libraries(arm_to_block ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+install(TARGETS arm_to_block DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
