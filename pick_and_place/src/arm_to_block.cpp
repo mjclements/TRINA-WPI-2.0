@@ -12,9 +12,11 @@
 #include <gazebo_msgs/SetModelState.h>
 
 #include "pick_and_place/PickSrv.h"
+#include "pick_and_place/PlaceSrv.h"
 
-moveit::planning_interface::PlanningSceneInterface* planning_scene_interface;
+moveit::planning_interface::PlanningSceneInterface *planning_scene_interface;
 boost::scoped_ptr<moveit::planning_interface::MoveGroupInterface> group; // make generic later
+std::string held_object = "";
 //ros::ServiceClient get_block_client;
 
 void add_coll_object(std::string obj)
@@ -30,12 +32,14 @@ void add_coll_object(std::string obj)
     object.primitives.resize(1);
     object.primitives[0].type = object.primitives[0].BOX;
     object.primitives[0].dimensions.resize(3);
-    if (obj == "unit_box") {//table
+    if (obj == "unit_box")
+    { //table
         object.primitives[0].dimensions[0] = 2.0;
         object.primitives[0].dimensions[1] = 1.0;
         object.primitives[0].dimensions[2] = 0.5;
     }
-    else {
+    else
+    {
         object.primitives[0].dimensions[0] = 0.03;
         object.primitives[0].dimensions[1] = 0.03;
         object.primitives[0].dimensions[2] = 0.1;
@@ -88,7 +92,6 @@ void openGripper(trajectory_msgs::JointTrajectory &posture)
     // posture.points[0].positions[4] = 0.00;
     // posture.points[0].positions[5] = -0.8;
     posture.points[0].time_from_start = ros::Duration(0.5);
-
 }
 
 void closedGripper(trajectory_msgs::JointTrajectory &posture)
@@ -113,11 +116,11 @@ void closedGripper(trajectory_msgs::JointTrajectory &posture)
     posture.points[0].time_from_start = ros::Duration(0.5);
 }
 
-void pick_block(std::string pick_obj)
+moveit::planning_interface::MoveItErrorCode pick_block(std::string pick_obj)
 {
     std::vector<moveit_msgs::Grasp> grasps;
     grasps.resize(1);
-
+    moveit::planning_interface::MoveItErrorCode result = moveit::planning_interface::MoveItErrorCode::FAILURE;
     // Setting grasp pose
     // ++++++++++++++++++++++
     gazebo_msgs::GetModelState block_state;
@@ -128,9 +131,9 @@ void pick_block(std::string pick_obj)
     else
     {
         ROS_WARN("service call to get_model_state failed!");
-        return;
+        return result;
     }
-    
+
     // get_block_client.call(block_state);
     // bool result = block_state.response.success;
     // if (!result)
@@ -144,7 +147,7 @@ void pick_block(std::string pick_obj)
     geometry_msgs::Pose target_pose1 = block_state.response.pose;
     grasps[0].grasp_pose.header.frame_id = "trina2_1/base_link";
     tf2::Quaternion orientation;
-    orientation.setRPY(-M_PI / 4, -M_PI, -M_PI/2);
+    orientation.setRPY(-M_PI / 4, -M_PI, -M_PI / 2);
     grasps[0].grasp_pose.pose.orientation = tf2::toMsg(orientation);
     grasps[0].grasp_pose.pose.position = block_state.response.pose.position;
     grasps[0].grasp_pose.pose.position.x -= 0.08;
@@ -182,7 +185,9 @@ void pick_block(std::string pick_obj)
     // Call pick to pick up the object using the grasps given
     group->setGoalTolerance(0.05);
     group->setStartStateToCurrentState();
-    group->pick(pick_obj, grasps);
+    result = group->pick(pick_obj, grasps);
+    held_object = pick_obj;
+    return result;
 }
 
 bool trina_pick(pick_and_place::PickSrv::Request &req, pick_and_place::PickSrv::Response &res)
@@ -190,73 +195,103 @@ bool trina_pick(pick_and_place::PickSrv::Request &req, pick_and_place::PickSrv::
     std::string pick_obj = req.pick_obj;
     ROS_INFO("Pick requested");
     add_coll_object(pick_obj);
-    pick_block(pick_obj);
-    return true;
+    res.success = (pick_block(pick_obj) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    return res.success;
 }
 
-void place_block(std::string place_obj)
+moveit::planning_interface::MoveItErrorCode place_block(double x, double y)
 {
-  // Create a vector of placings to be attempted, currently only creating single place location.
-  std::vector<moveit_msgs::PlaceLocation> place_location;
-  place_location.resize(1);
+    // Create a vector of placings to be attempted, currently only creating single place location.
+    std::vector<moveit_msgs::PlaceLocation> place_location;
+    place_location.resize(1);
+ moveit::planning_interface::MoveItErrorCode result = moveit::planning_interface::MoveItErrorCode::FAILURE;
+    // Setting place location pose
+    // +++++++++++++++++++++++++++
+    place_location[0].place_pose.header.frame_id = "trina2_1/base_link";
+    tf2::Quaternion orientation;
+    orientation.setRPY(0, 0, M_PI / 2);
+    place_location[0].place_pose.pose.orientation = tf2::toMsg(orientation);
 
-  // Setting place location pose
-  // +++++++++++++++++++++++++++
-  place_location[0].place_pose.header.frame_id = "trina2_1/base_link";
-  tf2::Quaternion orientation;
-  orientation.setRPY(0, 0, M_PI / 2);
-  place_location[0].place_pose.pose.orientation = tf2::toMsg(orientation);
+    /* While placing it is the exact location of the center of the object. */
+    place_location[0].place_pose.pose.position.x = x; //0.8;
+    place_location[0].place_pose.pose.position.y = y; //0.51;
+    place_location[0].place_pose.pose.position.z = 0.54;
 
-  /* While placing it is the exact location of the center of the object. */
-  place_location[0].place_pose.pose.position.x = 0.8;
-  place_location[0].place_pose.pose.position.y = 0.51;
-  place_location[0].place_pose.pose.position.z = 0.54;
+    // Setting pre-place approach
+    // ++++++++++++++++++++++++++
+    /* Defined with respect to frame_id */
+    place_location[0].pre_place_approach.direction.header.frame_id = "trina2_1/base_link";
+    /* Direction is set as negative z axis */
+    place_location[0].pre_place_approach.direction.vector.z = -1.0;
+    place_location[0].pre_place_approach.min_distance = 0.095;
+    place_location[0].pre_place_approach.desired_distance = 0.115;
 
-  // Setting pre-place approach
-  // ++++++++++++++++++++++++++
-  /* Defined with respect to frame_id */
-  place_location[0].pre_place_approach.direction.header.frame_id = "trina2_1/base_link";
-  /* Direction is set as negative z axis */
-  place_location[0].pre_place_approach.direction.vector.z = -1.0;
-  place_location[0].pre_place_approach.min_distance = 0.095;
-  place_location[0].pre_place_approach.desired_distance = 0.115;
+    // Setting post-grasp retreat
+    // ++++++++++++++++++++++++++
+    /* Defined with respect to frame_id */
+    place_location[0].post_place_retreat.direction.header.frame_id = "trina2_1/base_link";
+    /* Direction is set as negative y axis */
+    place_location[0].post_place_retreat.direction.vector.x = -1.0;
+    place_location[0].post_place_retreat.min_distance = 0.1;
+    place_location[0].post_place_retreat.desired_distance = 0.25;
 
-  // Setting post-grasp retreat
-  // ++++++++++++++++++++++++++
-  /* Defined with respect to frame_id */
-  place_location[0].post_place_retreat.direction.header.frame_id = "trina2_1/base_link";
-  /* Direction is set as negative y axis */
-  place_location[0].post_place_retreat.direction.vector.x = -1.0;
-  place_location[0].post_place_retreat.min_distance = 0.1;
-  place_location[0].post_place_retreat.desired_distance = 0.25;
-
-  // Setting posture of eef after placing object
-  // +++++++++++++++++++++++++++++++++++++++++++
-  /* Similar to the pick case */
-  openGripper(place_location[0].post_place_posture);
-
-  // Set support surface 
-  group->setSupportSurfaceName("unit_box");
-  // Call place to place the object using the place locations given.
-  group->place(place_obj, place_location);
-
+    // Setting posture of eef after placing object
+    // +++++++++++++++++++++++++++++++++++++++++++
+    /* Similar to the pick case */
+    openGripper(place_location[0].post_place_posture);
+    // std::string my_obj = "";
+    // auto known_objs = planning_scene_interface->getKnownObjectNames();
+    // for (auto &obj : known_objs)
+    // {
+    //     std::cout << obj << std::endl;
+    //     if (obj != "unit_box")
+    //     {
+    //         my_obj = obj;
+    //         break;
+    //     }
+    // }
+    // std::cout << "found attached(?) object " << my_obj << std::endl;
+    // Set support surface
+    group->setSupportSurfaceName("unit_box");
+    // Call place to place the object using the place locations given.
+    result = group->place(held_object, place_location);
+    return result;
+}
+bool trina_place(pick_and_place::PlaceSrv::Request &req, pick_and_place::PlaceSrv::Response &res)
+{
+    ROS_INFO("Place requested");
+    res.success = (place_block(req.x, req.y) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    return res.success;
 }
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "arm_to_block");
     ros::NodeHandle nh;
-    ros::AsyncSpinner spinner(1);
+    ros::AsyncSpinner spinner(0);
     spinner.start();
     ros::WallDuration(1.0).sleep();
-
+    if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
+    {
+        ros::console::notifyLoggerLevelsChanged();
+    }
     group.reset(new moveit::planning_interface::MoveGroupInterface("left_arm"));
     group->setPlanningTime(45.0);
     planning_scene_interface = new moveit::planning_interface::PlanningSceneInterface();
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
 
     // Make sure we have a clean planning scene before starting the node
-    planning_scene_interface->removeCollisionObjects(planning_scene_interface->getKnownObjectNames());
+
+    // auto names = planning_scene_interface->getKnownObjectNames();
+    // for (auto name : names) {
+    //     std::cout << "known object " << name << std::endl;
+    //     //planning_scene_interface->removeCollisionObject(name);
+    // }
+    // //planning_scene_interface->removeCollisionObjects(names);
+    // names = planning_scene_interface->getKnownObjectNames();
+    // std::cout << "Known objects after removal: " << std::endl;
+    // for (auto name : names)
+    //     std::cout << "known object " << name << std::endl;
     add_coll_object("unit_box");
 
     // gazebo_msgs::GetModelState block_state;
@@ -278,7 +313,6 @@ int main(int argc, char **argv)
     // target_pose1.orientation = tf2::toMsg(orientation);
     // target_pose1.position.z += 0.2;
 
-
     // group->setPoseTarget(target_pose1);
     // group->setGoalTolerance(0.1);
     // group->setStartStateToCurrentState();
@@ -295,11 +329,12 @@ int main(int argc, char **argv)
     // sphere_state.request.model_state.model_name = "unit_sphere";
     // set_sphere_client.call(sphere_state);
 
-    //ros::ServiceServer service = nh.advertiseService("trina_pick", trina_pick);
-    std::string pick_obj = "unit_box_0";
-    add_coll_object(pick_obj);
-    pick_block(pick_obj);
-    place_block(pick_obj);
+    ros::ServiceServer pick_service = nh.advertiseService("trina_pick", trina_pick);
+    ros::ServiceServer place_service = nh.advertiseService("trina_place", trina_place);
+    // std::string pick_obj = "unit_box_0";
+    // add_coll_object(pick_obj);
+    // pick_block(pick_obj);
+    // place_block(pick_obj);
     ros::waitForShutdown();
     return 0;
 }

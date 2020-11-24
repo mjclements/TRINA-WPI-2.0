@@ -59,6 +59,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_service_files(
    FILES
    PickSrv.srv
+   PlaceSrv.srv
  )
 
 ## Generate actions in the 'action' folder
