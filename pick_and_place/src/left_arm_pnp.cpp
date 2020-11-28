@@ -6,8 +6,7 @@
 
 // TF2
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
+
 // Gazebo
 #include <gazebo_msgs/GetModelState.h>
 #include <gazebo_msgs/SetModelState.h>
@@ -15,12 +14,12 @@
 #include "pick_and_place/PickSrv.h"
 #include "pick_and_place/PlaceSrv.h"
 
-moveit::planning_interface::PlanningSceneInterface *planning_scene_interface; // Testing 2 methods for global variable access
-boost::scoped_ptr<moveit::planning_interface::MoveGroupInterface> group;      // Both seem valid - evaluate later
+moveit::planning_interface::PlanningSceneInterface *planning_scene_interface;
+boost::scoped_ptr<moveit::planning_interface::MoveGroupInterface> group; // make generic later
 std::string held_object = "";
+//ros::ServiceClient get_block_client;
 
-
-void add_coll_object(std::string obj, bool to_add = true)
+void add_coll_object(std::string obj)
 {
     moveit_msgs::CollisionObject object;
 
@@ -49,7 +48,12 @@ void add_coll_object(std::string obj, bool to_add = true)
     gazebo_msgs::GetModelState block_state;
     block_state.request.model_name = obj;
     block_state.request.relative_entity_name = "trina2_1/base_link";
-
+    // get_block_client.call(block_state);
+    // bool result = block_state.response.success;
+    // if (!result)
+    //     ROS_WARN("service call to get_model_state failed!");
+    // else
+    //     ROS_INFO("Done");
     if (ros::service::call("/gazebo/get_model_state", block_state))
         ROS_INFO("Got model state");
     else
@@ -58,56 +62,11 @@ void add_coll_object(std::string obj, bool to_add = true)
         return;
     }
 
-    /* Define the pose of the box. */
+    /* Define the pose of the table. */
     object.primitive_poses.resize(1);
     object.primitive_poses[0] = block_state.response.pose;
     object.operation = object.ADD;
-    if (!to_add)
-        object.operation = object.REMOVE;
     planning_scene_interface->applyCollisionObject(object);
-}
-
-void add_attached_coll_object(std::string obj)
-{
-    moveit_msgs::AttachedCollisionObject att_object;
-
-    // Add the bounding box for obj.
-
-    att_object.link_name = "trina2_1/left_arm_left_outer_finger";
-    att_object.object.id = obj;
-    att_object.object.header.frame_id = "trina2_1/base_link";
-
-    /* Define the primitive and its dimensions. Update with dimensions from Gazebo when available*/
-    /* A default pose */
-    gazebo_msgs::GetModelState block_state;
-    block_state.request.model_name = obj;
-    block_state.request.relative_entity_name = "trina2_1/base_link";
-    if (ros::service::call("/gazebo/get_model_state", block_state))
-        ROS_INFO("Got model state");
-    else
-    {
-        ROS_WARN("service call to get_model_state failed!");
-        return;
-    }
-
-    /* Define a box to be attached */
-    shape_msgs::SolidPrimitive primitive;
-    primitive.type = primitive.BOX;
-    primitive.dimensions.resize(3);
-    primitive.dimensions[0] = 0.03;
-    primitive.dimensions[1] = 0.03;
-    primitive.dimensions[2] = 0.1;
-
-    att_object.object.primitives.push_back(primitive);
-    att_object.object.primitive_poses.push_back(block_state.response.pose);
-
-    att_object.touch_links = std::vector<std::string>{"trina2_1/left_arm_left_inner_finger", "trina2_1/left_arm_left_inner_finger_pad",
-                                                      "trina2_1/left_arm_left_inner_knuckle", "trina2_1/left_arm_left_outer_finger",
-                                                      "trina2_1/left_arm_left_outer_knuckle", "trina2_1/left_arm_right_outer_knuckle",
-                                                      "trina2_1/left_arm_right_inner_finger_pad", "trina2_1/left_arm_right_inner_finger",
-                                                      "trina2_1/left_arm_right_inner_knuckle"};
-    att_object.object.operation = att_object.object.ADD;
-    planning_scene_interface->applyAttachedCollisionObject(att_object);
 }
 
 void openGripper(trajectory_msgs::JointTrajectory &posture)
@@ -127,6 +86,11 @@ void openGripper(trajectory_msgs::JointTrajectory &posture)
     posture.points.resize(1);
     posture.points[0].positions.resize(6);
     posture.points[0].positions[0] = 0.00;
+    // posture.points[0].positions[1] = -0.8;
+    // posture.points[0].positions[2] = 0.00;
+    // posture.points[0].positions[3] = 0.00;
+    // posture.points[0].positions[4] = 0.00;
+    // posture.points[0].positions[5] = -0.8;
     posture.points[0].time_from_start = ros::Duration(0.5);
 }
 
@@ -144,6 +108,11 @@ void closedGripper(trajectory_msgs::JointTrajectory &posture)
     posture.points.resize(1);
     posture.points[0].positions.resize(6);
     posture.points[0].positions[0] = 0.8;
+    // posture.points[0].positions[1] = 0.8;
+    // posture.points[0].positions[2] = 0.0;
+    // posture.points[0].positions[3] = 0.0;
+    // posture.points[0].positions[4] = 0.0;
+    // posture.points[0].positions[5] = 0.8;
     posture.points[0].time_from_start = ros::Duration(0.5);
 }
 
@@ -165,15 +134,26 @@ moveit::planning_interface::MoveItErrorCode pick_block(std::string pick_obj)
         return result;
     }
 
+    // get_block_client.call(block_state);
+    // bool result = block_state.response.success;
+    // if (!result)
+    // {
+    //     ROS_WARN("service call to get_model_state failed!");
+    //     return;
+    // }
+    // else
+    //     ROS_INFO("Done");
+
     geometry_msgs::Pose target_pose1 = block_state.response.pose;
     grasps[0].grasp_pose.header.frame_id = "trina2_1/base_link";
     tf2::Quaternion orientation;
-    orientation.setRPY(-M_PI / 2, -M_PI, -M_PI / 2);
+    orientation.setRPY(-M_PI / 4, -M_PI, -M_PI / 2);
     grasps[0].grasp_pose.pose.orientation = tf2::toMsg(orientation);
     grasps[0].grasp_pose.pose.position = block_state.response.pose.position;
-    grasps[0].grasp_pose.pose.position.x -= 0.14;
-    grasps[0].grasp_pose.pose.position.z += 0.045;
-    grasps[0].max_contact_force = 20;
+    grasps[0].grasp_pose.pose.position.x -= 0.08;
+    grasps[0].grasp_pose.pose.position.y -= 0.01;
+    grasps[0].grasp_pose.pose.position.z += 0.08;
+
     // Setting pre-grasp approach
     // ++++++++++++++++++++++++++
     /* Defined with respect to frame_id */
@@ -210,50 +190,12 @@ moveit::planning_interface::MoveItErrorCode pick_block(std::string pick_obj)
     return result;
 }
 
-void retreat()
-{
-
-    geometry_msgs::PoseStamped eef_pose = group->getCurrentPose();
-
-    std::vector<geometry_msgs::Pose> waypoints;
-    geometry_msgs::Pose target_pose = eef_pose.pose;
-    for (int i = 0; i < 4; i++)
-    {
-        target_pose.position.z += 0.05;
-        waypoints.push_back(target_pose);
-    }
-    moveit_msgs::RobotTrajectory trajectory;
-    const double jump_threshold = 0.0;
-    const double eef_step = 0.005;
-    bool avoid = false; // avoid collisions - may need to make this false if the support surface causes problems
-    double fraction = group->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory, avoid);
-    if (fraction > 0)
-        group->execute(trajectory);
-    else
-        std::cout << "retreat failed" << std::endl;
-    group->clearPathConstraints();
-
-}
-
 bool trina_pick(pick_and_place::PickSrv::Request &req, pick_and_place::PickSrv::Response &res)
 {
     std::string pick_obj = req.pick_obj;
     ROS_INFO("Pick requested");
-    // To update location of pick_obj, in case needed
-    for (int i=0;i<3;++i) add_coll_object("unit_box_" + std::to_string(i), true);
-
-    // auto names = planning_scene_interface->getKnownObjectNames();
-    // for (auto name : names) {
-    //     std::cout << "known object " << name << std::endl;
-    // }
+    add_coll_object(pick_obj);
     res.success = (pick_block(pick_obj) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
-    if (!res.success)
-    {
-        // assuming here that we've had the persistent gripper trajectory issue, hard-coding the object attachment
-        add_coll_object(pick_obj, false);
-        add_attached_coll_object(pick_obj);
-        retreat();
-    }
     return res.success;
 }
 
@@ -261,8 +203,8 @@ moveit::planning_interface::MoveItErrorCode place_block(double x, double y)
 {
     // Create a vector of placings to be attempted, currently only creating single place location.
     std::vector<moveit_msgs::PlaceLocation> place_location;
-    place_location.resize(3);
-    moveit::planning_interface::MoveItErrorCode result = moveit::planning_interface::MoveItErrorCode::FAILURE;
+    place_location.resize(1);
+ moveit::planning_interface::MoveItErrorCode result = moveit::planning_interface::MoveItErrorCode::FAILURE;
     // Setting place location pose
     // +++++++++++++++++++++++++++
     place_location[0].place_pose.header.frame_id = "trina2_1/base_link";
@@ -273,7 +215,7 @@ moveit::planning_interface::MoveItErrorCode place_block(double x, double y)
     /* While placing it is the exact location of the center of the object. */
     place_location[0].place_pose.pose.position.x = x; //0.8;
     place_location[0].place_pose.pose.position.y = y; //0.51;
-    place_location[0].place_pose.pose.position.z = 0.6;
+    place_location[0].place_pose.pose.position.z = 0.54;
 
     // Setting pre-place approach
     // ++++++++++++++++++++++++++
@@ -297,22 +239,21 @@ moveit::planning_interface::MoveItErrorCode place_block(double x, double y)
     // +++++++++++++++++++++++++++++++++++++++++++
     /* Similar to the pick case */
     openGripper(place_location[0].post_place_posture);
-
-    place_location[1] = place_location[0];
-    orientation.setRPY(M_PI/2, 0, M_PI / 2);
-    place_location[1].place_pose.pose.orientation = tf2::toMsg(orientation);
-    openGripper(place_location[1].post_place_posture);
-
-    place_location[2] = place_location[0];
-    orientation.setRPY(0, M_PI / 2, M_PI / 2);
-    place_location[2].place_pose.pose.orientation = tf2::toMsg(orientation);
-    openGripper(place_location[2].post_place_posture);
-  
+    // std::string my_obj = "";
+    // auto known_objs = planning_scene_interface->getKnownObjectNames();
+    // for (auto &obj : known_objs)
+    // {
+    //     std::cout << obj << std::endl;
+    //     if (obj != "unit_box")
+    //     {
+    //         my_obj = obj;
+    //         break;
+    //     }
+    // }
+    // std::cout << "found attached(?) object " << my_obj << std::endl;
+    // Set support surface
     group->setSupportSurfaceName("unit_box");
     // Call place to place the object using the place locations given.
-    group->setGoalTolerance(0.5);
-    group->setStartStateToCurrentState();
-    group->setNumPlanningAttempts(10);
     result = group->place(held_object, place_location);
     return result;
 }
@@ -351,14 +292,49 @@ int main(int argc, char **argv)
     // std::cout << "Known objects after removal: " << std::endl;
     // for (auto name : names)
     //     std::cout << "known object " << name << std::endl;
+    add_coll_object("unit_box");
 
+    // gazebo_msgs::GetModelState block_state;
+    // block_state.request.relative_entity_name = "trina2_1/base_link";
+    // block_state.request.model_name = "unit_box_0";
+    // if (ros::service::call("/gazebo/get_model_state", block_state))
+    //     ROS_INFO("Done");
+    // else
+    // {
+    //     ROS_WARN("service call to get_model_state failed!");
+    //     return 0;
+    // }
 
-    // Initialize planning scene
-    add_coll_object("unit_box", true);
-    for (int i=0;i<3;++i) add_coll_object("unit_box_" + std::to_string(i), true);
+    // // // Move to pose
+
+    // geometry_msgs::Pose target_pose1 = block_state.response.pose;
+    // tf2::Quaternion orientation;
+    // orientation.setRPY(-M_PI / 4, -M_PI, -M_PI/2);
+    // target_pose1.orientation = tf2::toMsg(orientation);
+    // target_pose1.position.z += 0.2;
+
+    // group->setPoseTarget(target_pose1);
+    // group->setGoalTolerance(0.1);
+    // group->setStartStateToCurrentState();
+    // bool success = (group->plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    // ROS_INFO_NAMED("move", "Planning to pose goal %s", success ? "" : "FAILED");
+    // if (success)
+    // {
+    //     success = (group->execute(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    // }
+    // gazebo_msgs::SetModelState sphere_state;
+    // ros::ServiceClient set_sphere_client = nh.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
+    // sphere_state.request.model_state.pose = target_pose1;
+    // sphere_state.request.model_state.reference_frame = "trina2_1/base_link";
+    // sphere_state.request.model_state.model_name = "unit_sphere";
+    // set_sphere_client.call(sphere_state);
 
     ros::ServiceServer pick_service = nh.advertiseService("trina_pick", trina_pick);
     ros::ServiceServer place_service = nh.advertiseService("trina_place", trina_place);
+    // std::string pick_obj = "unit_box_0";
+    // add_coll_object(pick_obj);
+    // pick_block(pick_obj);
+    // place_block(pick_obj);
     ros::waitForShutdown();
     return 0;
 }

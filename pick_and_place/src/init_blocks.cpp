@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     for (int i=0; i<3;++i) {
         block_state.request.model_state.model_name = "unit_box_" + std::to_string(i);
         block_state.request.model_state.pose.position.x = 0.8;
-        block_state.request.model_state.pose.position.y = 0.5 - i*0.2;
+        block_state.request.model_state.pose.position.y = 0.5 - i*0.2; // 0.5 - i*0.2 for left arm, -0.5 + i*0.2 for right
         block_state.request.model_state.pose.position.z = 0.54;
         set_block_client.call(block_state);
         //make sure service call was successful

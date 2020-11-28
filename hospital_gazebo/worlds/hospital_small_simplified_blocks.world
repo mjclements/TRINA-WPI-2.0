@@ -6487,9 +6487,9 @@
             <ixx>1</ixx>
             <ixy>0</ixy>
             <ixz>0</ixz>
-            <iyy>1</iyy>
+            <iyy>3.5</iyy>
             <iyz>0</iyz>
-            <izz>1</izz>
+            <izz>4</izz>
             </inertia>
             <pose frame=''>0 0 0 0 -0 0</pose>
         </inertial>
@@ -6565,7 +6565,7 @@
             </surface>
         </collision>
         </link>
-        <static>0</static>
+        <static>1</static>
         <allow_auto_disable>1</allow_auto_disable>
     </model>
     <model name='unit_box_0'>
@@ -6639,8 +6639,8 @@
                 <soft_erp>0.2</soft_erp>
                 <kp>1e+13</kp>
                 <kd>1</kd>
-                <max_vel>0.01</max_vel>
-                <min_depth>0</min_depth>
+                <max_vel>0</max_vel>
+                <min_depth>0.001</min_depth>
                 </ode>
                 <bullet>
                 <split_impulse>1</split_impulse>
@@ -6728,8 +6728,8 @@
                 <soft_erp>0.2</soft_erp>
                 <kp>1e+13</kp>
                 <kd>1</kd>
-                <max_vel>0.01</max_vel>
-                <min_depth>0</min_depth>
+                <max_vel>0</max_vel>
+                <min_depth>0.001</min_depth>
                 </ode>
                 <bullet>
                 <split_impulse>1</split_impulse>
@@ -6817,8 +6817,8 @@
                 <soft_erp>0.2</soft_erp>
                 <kp>1e+13</kp>
                 <kd>1</kd>
-                <max_vel>0.01</max_vel>
-                <min_depth>0</min_depth>
+                <max_vel>0</max_vel>
+                <min_depth>0.001</min_depth>
                 </ode>
                 <bullet>
                 <split_impulse>1</split_impulse>

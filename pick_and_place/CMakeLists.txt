@@ -153,6 +153,10 @@ add_executable(arm_to_block src/arm_to_block.cpp)
 target_link_libraries(arm_to_block ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 install(TARGETS arm_to_block DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
+add_executable(pnp_demo src/pnp_demo.cpp)
+target_link_libraries(pnp_demo ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+install(TARGETS pnp_demo DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
