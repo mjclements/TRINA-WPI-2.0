@@ -60,6 +60,7 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    PickSrv.srv
    PlaceSrv.srv
+   RecoverSrv.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -167,6 +168,7 @@ install(TARGETS pnp_demo DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(arm_to_block pick_and_place_generate_messages_cpp)
+add_dependencies(pnp_demo pick_and_place_generate_messages_cpp)
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}

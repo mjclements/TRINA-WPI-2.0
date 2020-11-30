@@ -4,7 +4,8 @@
 #include "std_msgs/String.h"
 #include <string>
 
-enum class TrinaState {
+enum class TrinaState
+{
     WAITING,
     COMMANDED,
     PICKING,
@@ -21,17 +22,26 @@ private:
     ros::Publisher pub;
 
 public:
-
-
     TrinaSM(ros::NodeHandle *nh)
     {
         curr_state = TrinaState::WAITING;
         sub = nh->subscribe("buttons", 1000, &TrinaSM::callback, this);
-        pub = nh->advertise<std_msgs::String>("state_messages", 1);
+        pub = nh->advertise<std_msgs::Int8>("trina_state", 1);
     }
     inline TrinaState getCurrentState() const { return curr_state; }
+
+    void pubState()
+    {
+        std_msgs::Int8 output;
+        output.data = static_cast<int>(curr_state);
+        pub.publish(output);
+    }
+
     void callback(const std_msgs::Int8::ConstPtr &msg)
     {
+        int temp = msg->data;
+        curr_state = ((0 <= temp) && (temp <= 4)) ? static_cast<TrinaState>(temp) : TrinaState::FAILED;
+        pubState();
         switch (curr_state)
         {
         case TrinaState::WAITING:
@@ -49,12 +59,6 @@ public:
         case TrinaState::FAILED:
             ROS_INFO("Current state: %s", "Failed");
         }
-    
-        int temp = msg->data;
-        curr_state = ((0 <= temp) && (temp <= 4)) ? static_cast<TrinaState>(temp) : TrinaState::FAILED;
-        std_msgs::String output;
-        output.data = "changed state";
-        pub.publish(output);
     }
 };
 
@@ -62,10 +66,14 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "trina_SM");
     ros::NodeHandle nh;
-
+    ros::Rate loop_rate(10);
     TrinaSM trina_1 = TrinaSM(&nh);
-
-    ros::spin();
+    while (ros::ok())
+    {
+        trina_1.pubState();
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
 
     return 0;
 }
