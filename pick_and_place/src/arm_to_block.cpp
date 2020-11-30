@@ -43,7 +43,7 @@ void update_coll_object(std::string obj)
 
     if (ros::service::call("/gazebo/get_model_state", block_state))
         //ROS_INFO("Got model state");
-        std::cout << " ";  // debug hack
+        std::cout << " "; // debug hack
     else
     {
         ROS_WARN("service call to get_model_state failed!");
@@ -88,7 +88,7 @@ void add_coll_object(std::string obj, bool to_add = true)
 
     if (ros::service::call("/gazebo/get_model_state", block_state))
         //ROS_INFO("Got model state");
-        std::cout << " ";  // debug hack
+        std::cout << " "; // debug hack
     else
     {
         ROS_WARN("service call to get_model_state failed!");
@@ -121,7 +121,7 @@ void add_attached_coll_object(std::string obj)
     block_state.request.relative_entity_name = "trina2_1/base_link";
     if (ros::service::call("/gazebo/get_model_state", block_state))
         //ROS_INFO("Got model state");
-        std::cout << " ";  // debug hack
+        std::cout << " "; // debug hack
     else
     {
         ROS_WARN("service call to get_model_state failed!");
@@ -338,7 +338,11 @@ moveit::planning_interface::MoveItErrorCode place_block(double x, double y)
     // Desired location of the center of the object
     place_location[0].place_pose.pose.position.x = x;
     place_location[0].place_pose.pose.position.y = y;
-    place_location[0].place_pose.pose.position.z = 0.6 + 0.05 * stack_size; // Not sure why this much separation from the table is needed - work to go
+    place_location[0].place_pose.pose.position.z = 0.6; // Not sure why this much separation from the table is needed - work to go
+    if (stack_size > 1)
+    {
+        place_location[0].place_pose.pose.position.z += 0.05 * (stack_size - 1);
+    }
 
     // Setting pre-place approach
     // ++++++++++++++++++++++++++
