@@ -61,6 +61,7 @@ find_package(catkin REQUIRED COMPONENTS
    PickSrv.srv
    PlaceSrv.srv
    RecoverSrv.srv
+   GraspSrv.srv
  )
 
 ## Generate actions in the 'action' folder
@@ -74,6 +75,7 @@ find_package(catkin REQUIRED COMPONENTS
  generate_messages(
    DEPENDENCIES
    std_msgs
+   moveit_msgs
  )
 
 ################################################
@@ -158,6 +160,10 @@ add_executable(pnp_demo src/pnp_demo.cpp)
 target_link_libraries(pnp_demo ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 install(TARGETS pnp_demo DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
+add_executable(grasp_generator src/grasp_generator.cpp)
+target_link_libraries(grasp_generator ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+install(TARGETS grasp_generator DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -169,6 +175,7 @@ install(TARGETS pnp_demo DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(arm_to_block pick_and_place_generate_messages_cpp)
 add_dependencies(pnp_demo pick_and_place_generate_messages_cpp)
+add_dependencies(pick_and_place pick_and_place_generate_messages_cpp)
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}

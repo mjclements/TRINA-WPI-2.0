@@ -11,13 +11,16 @@
 // TF2
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
+#include "pick_and_place/GraspSrv.h"
+
 static const std::string PLANNING_GROUP = "left_arm";
 static const std::string GRIPPER_GROUP = "left_gripper";
+bool use_grasp_generator = true;
 
-void openGripper(trajectory_msgs::JointTrajectory& posture)
+void openGripper(trajectory_msgs::JointTrajectory &posture)
 {
 
-  // Add all joints of right gripper move group. 
+  // Add all joints of right gripper move group.
 
   posture.joint_names.resize(6);
   posture.joint_names[0] = "trina2_1/left_arm_finger_joint";
@@ -27,7 +30,7 @@ void openGripper(trajectory_msgs::JointTrajectory& posture)
   posture.joint_names[4] = "trina2_1/left_arm_right_outer_knuckle_joint";
   posture.joint_names[5] = "trina2_1/left_arm_right_inner_finger_joint";
 
-  // Set them as open. 
+  // Set them as open.
   posture.points.resize(1);
   posture.points[0].positions.resize(6);
   posture.points[0].positions[0] = 0.00;
@@ -37,12 +40,11 @@ void openGripper(trajectory_msgs::JointTrajectory& posture)
   posture.points[0].positions[4] = 0.00;
   posture.points[0].positions[5] = 0.00;
   posture.points[0].time_from_start = ros::Duration(0.5);
-
 }
 
-void closedGripper(trajectory_msgs::JointTrajectory& posture)
+void closedGripper(trajectory_msgs::JointTrajectory &posture)
 {
- // Add all joints of the left gripper move group - make these generic later
+  // Add all joints of the left gripper move group - make these generic later
   posture.joint_names.resize(6);
   posture.joint_names[0] = "trina2_1/left_arm_finger_joint";
   posture.joint_names[1] = "trina2_1/left_arm_left_inner_finger_joint";
@@ -60,12 +62,11 @@ void closedGripper(trajectory_msgs::JointTrajectory& posture)
   posture.points[0].positions[4] = 0.00;
   posture.points[0].positions[5] = 0.00;
   posture.points[0].time_from_start = ros::Duration(0.5);
-
 }
 
-// Currently this routine creates one grasp to try.  We will need to adapt this for the optimal grasp of a 
+// Currently this routine creates one grasp to try.  We will need to adapt this for the optimal grasp of a
 // cube to use in stacking/ manipulation.  We may create additional grasps later.
-void pick(moveit::planning_interface::MoveGroupInterface& move_group)
+void pick(moveit::planning_interface::MoveGroupInterface &move_group, ros::NodeHandle *nh)
 {
   // BEGIN_SUB_TUTORIAL pick1
   // Create a vector of grasps to be attempted, currently only creating single grasp.
@@ -73,39 +74,55 @@ void pick(moveit::planning_interface::MoveGroupInterface& move_group)
   std::vector<moveit_msgs::Grasp> grasps;
   grasps.resize(1);
 
-  // Setting grasp pose
-  // ++++++++++++++++++++++
-  // This is the pose of panda_link8. |br|
-  // From panda_link8 to the palm of the eef the distance is 0.058, the cube starts 0.01 before 5.0 (half of the length
-  // of the cube). |br|
-  // Therefore, the position for panda_link8 = 5 - (length of cube/2 - distance b/w panda_link8 and palm of eef - some
-  // extra padding)
-  grasps[0].grasp_pose.header.frame_id = "trina2_1/base_link";
-  tf2::Quaternion orientation;
-  orientation.setRPY(-M_PI / 2, -M_PI / 4, -M_PI / 2);
-  grasps[0].grasp_pose.pose.orientation = tf2::toMsg(orientation);
-  grasps[0].grasp_pose.pose.position.x = 0.415;
-  grasps[0].grasp_pose.pose.position.y = 0;
-  grasps[0].grasp_pose.pose.position.z = 0.5;
+  if (use_grasp_generator)
+  {
+    ros::ServiceClient grasp_client = nh->serviceClient<pick_and_place::GraspSrv>("/trina2_1/trina_collab_grasp");
+    pick_and_place::GraspSrv grasp_srv;
+    grasp_srv.request.object = "demo_object";
+    if(grasp_client.call(grasp_srv)) {
+      grasps[0] = grasp_srv.response.grasp;
+      std::cout << "Grasp returned: " << grasps[0] << std::endl;
+    }
+    else {
+      ROS_ERROR("Failed to get grasp");
+      return;
+    }
+  }
+  else
+  {
+    // Setting grasp pose
+    // ++++++++++++++++++++++
+    // This is the pose of panda_link8. |br|
+    // From panda_link8 to the palm of the eef the distance is 0.058, the cube starts 0.01 before 5.0 (half of the length
+    // of the cube). |br|
+    // Therefore, the position for panda_link8 = 5 - (length of cube/2 - distance b/w panda_link8 and palm of eef - some
+    // extra padding)
+    grasps[0].grasp_pose.header.frame_id = "trina2_1/base_link";
+    tf2::Quaternion orientation;
+    orientation.setRPY(-M_PI / 2, -M_PI / 4, -M_PI / 2);
+    grasps[0].grasp_pose.pose.orientation = tf2::toMsg(orientation);
+    grasps[0].grasp_pose.pose.position.x = 0.415;
+    grasps[0].grasp_pose.pose.position.y = 0;
+    grasps[0].grasp_pose.pose.position.z = 0.5;
 
-  // Setting pre-grasp approach
-  // ++++++++++++++++++++++++++
-  /* Defined with respect to frame_id */
-  grasps[0].pre_grasp_approach.direction.header.frame_id = "trina2_1/base_link";
-  /* Direction is set as positive x axis */
-  grasps[0].pre_grasp_approach.direction.vector.x = 1.0;
-  grasps[0].pre_grasp_approach.min_distance = 0.095;
-  grasps[0].pre_grasp_approach.desired_distance = 0.115;
+    // Setting pre-grasp approach
+    // ++++++++++++++++++++++++++
+    /* Defined with respect to frame_id */
+    grasps[0].pre_grasp_approach.direction.header.frame_id = "trina2_1/base_link";
+    /* Direction is set as positive x axis */
+    grasps[0].pre_grasp_approach.direction.vector.x = 1.0;
+    grasps[0].pre_grasp_approach.min_distance = 0.095;
+    grasps[0].pre_grasp_approach.desired_distance = 0.115;
 
-  // Setting post-grasp retreat
-  // ++++++++++++++++++++++++++
-  /* Defined with respect to frame_id */
-  grasps[0].post_grasp_retreat.direction.header.frame_id = "trina2_1/base_link";
-  /* Direction is set as positive z axis */
-  grasps[0].post_grasp_retreat.direction.vector.z = 1.0;
-  grasps[0].post_grasp_retreat.min_distance = 0.1;
-  grasps[0].post_grasp_retreat.desired_distance = 0.25;
-
+    // Setting post-grasp retreat
+    // ++++++++++++++++++++++++++
+    /* Defined with respect to frame_id */
+    grasps[0].post_grasp_retreat.direction.header.frame_id = "trina2_1/base_link";
+    /* Direction is set as positive z axis */
+    grasps[0].post_grasp_retreat.direction.vector.z = 1.0;
+    grasps[0].post_grasp_retreat.min_distance = 0.1;
+    grasps[0].post_grasp_retreat.desired_distance = 0.25;
+  }
   // Setting posture of eef before grasp
   // +++++++++++++++++++++++++++++++++++
   openGripper(grasps[0].pre_grasp_posture);
@@ -126,7 +143,7 @@ void pick(moveit::planning_interface::MoveGroupInterface& move_group)
 }
 
 // Again, tries a single placement location.  We can use this list to create "failures" in place actions.
-void place(moveit::planning_interface::MoveGroupInterface& group)
+void place(moveit::planning_interface::MoveGroupInterface &group)
 {
   // BEGIN_SUB_TUTORIAL place
   // TODO(@ridhwanluthra) - Calling place function may lead to "All supplied place locations failed. Retrying last
@@ -179,9 +196,9 @@ void place(moveit::planning_interface::MoveGroupInterface& group)
 }
 
 // This routine (shamelessly stolen from the MoveIt tutorials) creates collision objects for the robot
-// to interact with in RViz.  We will need to create "real" objects in Gazebo and figure out how to interact 
+// to interact with in RViz.  We will need to create "real" objects in Gazebo and figure out how to interact
 // with those instead, but this works well for testing manipulation.
-void addCollisionObjects(moveit::planning_interface::PlanningSceneInterface& planning_scene_interface)
+void addCollisionObjects(moveit::planning_interface::PlanningSceneInterface &planning_scene_interface)
 {
   // BEGIN_SUB_TUTORIAL table1
   //
@@ -260,40 +277,41 @@ void addCollisionObjects(moveit::planning_interface::PlanningSceneInterface& pla
 }
 
 // Demo function to try moving the arm manually
-void test_moveit(moveit::planning_interface::MoveGroupInterface& group) {
+void test_moveit(moveit::planning_interface::MoveGroupInterface &group)
+{
   moveit::core::RobotStatePtr current_state = group.getCurrentState();
   std::vector<double> joint_group_positions;
-  const moveit::core::JointModelGroup* joint_model_group = group.getCurrentState()->getJointModelGroup(PLANNING_GROUP);
+  const moveit::core::JointModelGroup *joint_model_group = group.getCurrentState()->getJointModelGroup(PLANNING_GROUP);
   current_state->copyJointGroupPositions(joint_model_group, joint_group_positions);
   moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-  joint_group_positions[0] = joint_group_positions[0] - 0.3;  // radians
+  joint_group_positions[0] = joint_group_positions[0] - 0.3; // radians
   group.setJointValueTarget(joint_group_positions);
   bool success = (group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
   ROS_INFO_NAMED("tutorial", "Visualizing plan 2 (joint space goal) %s", success ? "" : "FAILED");
-  if (success) {
+  if (success)
+  {
     success = (group.execute(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
   }
   ROS_INFO_NAMED("tutorial", "Executing plan (joint space goal) %s", success ? "" : "FAILED");
-  std::vector< std::string > remembered = group.getNamedTargets();
+  std::vector<std::string> remembered = group.getNamedTargets();
   std::cout << remembered.front();
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   ros::init(argc, argv, "trina_pick_place");
   ros::NodeHandle nh;
   ros::AsyncSpinner spinner(1);
   spinner.start();
 
-
   ros::WallDuration(1.0).sleep();
   moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
   moveit::planning_interface::MoveGroupInterface arm_group(PLANNING_GROUP); // make generic later
   arm_group.setPlanningTime(45.0);
 
-
   // Diagnostics - remove later
-  if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+  if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
+  {
     ros::console::notifyLoggerLevelsChanged();
   }
   // moveit::planning_interface::MoveGroupInterface grip_group(GRIPPER_GROUP);
@@ -309,14 +327,13 @@ int main(int argc, char** argv)
   //test_moveit(arm_group);
   ros::WallDuration(1.0).sleep();
 
-
-  // TODO: Create a service that can be called by a button click, then loop.  
+  // TODO: Create a service that can be called by a button click, then loop.
   addCollisionObjects(planning_scene_interface);
 
   // Wait a bit for ROS things to initialize
   ros::WallDuration(1.0).sleep();
 
-  pick(arm_group);
+  pick(arm_group, &nh);
 
   ros::WallDuration(1.0).sleep();
 
