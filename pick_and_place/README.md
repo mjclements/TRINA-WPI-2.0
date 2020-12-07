@@ -1,5 +1,8 @@
 # README for TRINA2 Pick and Place
 
+### Prerequisites
+In order to run our simulation, all the prerequisites for the baseline HIRO TRINA2 environment need to be met.  In addition, an alternate version of the GazeboGraspFix plugin needs to be installed in the ros_kortex package.  The file "GazeboGraspFix.cpp" in ros_kortex/third_party/gazebo-pkgs/gazebo_grasp_plugin/src should be replaced with the version in this folder.  This is a temporary solution to an issue with using two grippers for manipulation.  A better design for a permanent fix will require some reorganization in the robot description and could be planned for future work.
+
 ### Startup
 
 Launch hospital world with table and blocks:
