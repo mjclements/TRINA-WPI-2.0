@@ -104,7 +104,7 @@ void add_coll_object(std::string obj, bool to_add = true)
     planning_scene_interface->applyCollisionObject(object);
 }
 
-void add_attached_coll_object(std::string obj)
+void add_attached_coll_object(std::string obj, bool to_add = true)
 {
     moveit_msgs::AttachedCollisionObject att_object;
 
@@ -150,7 +150,7 @@ void add_attached_coll_object(std::string obj)
         "trina2_1/left_arm_right_inner_finger",
         "trina2_1/left_arm_right_inner_knuckle",
     };
-    att_object.object.operation = att_object.object.ADD;
+    att_object.object.operation = to_add ? att_object.object.ADD : att_object.object.REMOVE;
     planning_scene_interface->applyAttachedCollisionObject(att_object);
 }
 
@@ -308,7 +308,7 @@ bool trina_pick(pick_and_place::PickSrv::Request &req, pick_and_place::PickSrv::
     {
         new_state.data = 4; // FAILED
         //add_coll_object(pick_obj, false);
-        //add_attached_coll_object(pick_obj);
+        //add_attached_coll_object(pick_obj, true);
         //retreat();
     }
     else
@@ -415,13 +415,30 @@ bool trina_recover(pick_and_place::RecoverSrv::Request &req, pick_and_place::Rec
     if (cont)
     {
         add_coll_object(held_object, false);
-        add_attached_coll_object(held_object);
+        add_attached_coll_object(held_object, true);
         retreat();
     }
     else
     {
-        retreat();
-        // TODO: change to open gripper, then send goal command to home the arm
+        // Open the gripper - using MoveIt because we may later want to change this to a different trajectory plan
+        moveit::planning_interface::MoveGroupInterface grip_group("left_gripper");
+        moveit::core::RobotStatePtr current_state = grip_group.getCurrentState();
+        std::vector<double> joint_group_positions;
+        const moveit::core::JointModelGroup *joint_model_group = grip_group.getCurrentState()->getJointModelGroup("left_gripper");
+        current_state->copyJointGroupPositions(joint_model_group, joint_group_positions);
+        moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+        joint_group_positions[0] = 0;
+        grip_group.setJointValueTarget(joint_group_positions);
+        // get rid of collision object, to eliminate collision issues
+        add_coll_object(held_object, false);
+        bool success = (grip_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+        ROS_INFO("Opening gripper %s", success ? "" : "FAILED");
+        if (success)
+        {
+            success = (grip_group.execute(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+            retreat();
+        }
+        add_coll_object(held_object, true);
     }
     std_msgs::Int8 new_state;
     new_state.data = 0; // WAITING
