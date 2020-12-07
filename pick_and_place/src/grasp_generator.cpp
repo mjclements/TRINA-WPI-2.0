@@ -15,10 +15,15 @@ enum class Approaches
     DOWN
 };
 
+/* This class defines a grasp generator that works with the TRINA2 simulation developed by the HIRO Lab.  
+ * It stores the most recently recommended grasp approach direction, and accepts change requests on topic "grasp_dir".
+ * It also provides the "trina_collab_grasp" ROS service, which returns a moveit_msgs::Grasp object that combines 
+ * knowledge about the robot, the object to be grasped, and the recommended grasp direction to produce a feasible pick action.
+ */
 class TrinaGraspGen
 {
 private:
-    Approaches approach_direction;
+    Approaches approach_direction; // Stores the recommendation from the user
     ros::Subscriber grasp_sub;
     ros::ServiceServer grasp_srv;
 
@@ -32,8 +37,8 @@ public:
     bool trina_grasp(pick_and_place::GraspSrv::Request &req, pick_and_place::GraspSrv::Response &res)
     {
         geometry_msgs::Pose target_pose1;
-        // If we are running just the RViz demo, we set the known object position
-        // Note that for the demo object, only the FORWARD and DOWN grasps are reachable in TRINA's workspace
+        // If we are running just the RViz demo, we set the known object position, since there is no physical object to find.
+        // Note that for the demo object, only the FORWARD and DOWN grasps are reachable in TRINA's workspace.
         if (req.object == "demo_object")
         {
             target_pose1.position.x = 0.5;
@@ -41,7 +46,7 @@ public:
             target_pose1.position.z = 0.5;
         }
         // This code converts the grasp generator to work with Gazebo objects.
-        // Get position of block
+        // Gets the actual position of a block.
         else
         {
             gazebo_msgs::GetModelState block_state;
@@ -111,6 +116,7 @@ public:
         return true;
     }
 
+    // Callback for "grasp_dir" topic.  Given an integer input, do a basic check for validity and set the desired grasping direction.
     void collab_grasp_callback(const std_msgs::Int8::ConstPtr &msg)
     {
         int temp = msg->data;
@@ -125,6 +131,8 @@ public:
         }
     }
 };
+
+// Initialize the ROS node, create an instance of the grasp generator, and spin...
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "trina_grasp");

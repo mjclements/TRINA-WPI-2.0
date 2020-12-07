@@ -76,7 +76,7 @@ void add_coll_object(std::string obj, bool to_add = true)
         object.primitives[0].dimensions[2] = 0.5;
     }
     else
-    {
+    { //block
         object.primitives[0].dimensions[0] = 0.05;
         object.primitives[0].dimensions[1] = 0.05;
         object.primitives[0].dimensions[2] = 0.1;
@@ -445,7 +445,9 @@ int main(int argc, char **argv)
     planning_scene_interface = new moveit::planning_interface::PlanningSceneInterface();
     moveit::planning_interface::MoveGroupInterface::Plan my_plan;
     state_pub = nh.advertise<std_msgs::Int8>("buttons", 1);
-    // Make sure we have a clean planning scene before starting the node
+    // Make sure we have a clean planning scene before starting the node - for some reason, we were never able
+    // to get the planning scene cleared, which would have better allowed for test resets after failures without
+    // having to reset the simulation.  Code is retained for future troubleshooting, when possible.
 
     // auto names = planning_scene_interface->getKnownObjectNames();
     // for (auto name : names) {
@@ -457,6 +459,8 @@ int main(int argc, char **argv)
     // std::cout << "Known objects after removal: " << std::endl;
     // for (auto name : names)
     //     std::cout << "known object " << name << std::endl;
+
+    // Alerts users if unexpected objects exist in the planning scene on node initiation.
     auto names = planning_scene_interface->getKnownObjectNames();
     for (auto name : names)
     {

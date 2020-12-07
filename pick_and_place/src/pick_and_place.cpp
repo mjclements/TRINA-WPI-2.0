@@ -1,4 +1,5 @@
-/* This code began life as a the MoveIt Pick and Place tutorial with the Panda robot arm
+/* This code began life as a the MoveIt Pick and Place tutorial with the Panda robot arm:
+ * http://docs.ros.org/en/melodic/api/moveit_tutorials/html/doc/pick_place/pick_place_tutorial.html
  */
 
 // ROS
@@ -14,9 +15,9 @@
 #include "pick_and_place/GraspSrv.h"
 
 static const std::string PLANNING_GROUP = "left_arm";
-static const std::string GRIPPER_GROUP = "left_gripper";
-bool use_grasp_generator = true;
+bool use_grasp_generator = true; // The demo file can also be run without the grasp generator node
 
+// Creates the JointTrajectory message corresponding to an open gripper for encoding in a Grasp
 void openGripper(trajectory_msgs::JointTrajectory &posture)
 {
 
@@ -41,10 +42,10 @@ void openGripper(trajectory_msgs::JointTrajectory &posture)
   posture.points[0].positions[5] = 0.00;
   posture.points[0].time_from_start = ros::Duration(0.5);
 }
-
+// Creates the JointTrajectory message corresponding to an closed gripper for encoding in a Grasp
 void closedGripper(trajectory_msgs::JointTrajectory &posture)
 {
-  // Add all joints of the left gripper move group - make these generic later
+  // Add all joints of the left gripper move group 
   posture.joint_names.resize(6);
   posture.joint_names[0] = "trina2_1/left_arm_finger_joint";
   posture.joint_names[1] = "trina2_1/left_arm_left_inner_finger_joint";
@@ -68,13 +69,14 @@ void closedGripper(trajectory_msgs::JointTrajectory &posture)
 // cube to use in stacking/ manipulation.  We may create additional grasps later.
 void pick(moveit::planning_interface::MoveGroupInterface &move_group, ros::NodeHandle *nh)
 {
-  // BEGIN_SUB_TUTORIAL pick1
-  // Create a vector of grasps to be attempted, currently only creating single grasp.
-  // This is essentially useful when using a grasp generator to generate and test multiple grasps.
+
+  // Create a vector of grasps to be attempted.
+  // Multiple grasps can be passed to the move_group pick routine for evaluation.  This can be used with 
+  // a grasp generator to generate and test multiple grasps.  Currently only one grasp is passed in.
   std::vector<moveit_msgs::Grasp> grasps;
   grasps.resize(1);
 
-  if (use_grasp_generator)
+  if (use_grasp_generator)  // Get the recommended grasp via a call to the grasp generator service using the default demo object
   {
     ros::ServiceClient grasp_client = nh->serviceClient<pick_and_place::GraspSrv>("/trina2_1/trina_collab_grasp");
     pick_and_place::GraspSrv grasp_srv;
@@ -88,15 +90,9 @@ void pick(moveit::planning_interface::MoveGroupInterface &move_group, ros::NodeH
       return;
     }
   }
-  else
+  else  // Get the default grasp for the auto-generated object
   {
-    // Setting grasp pose
-    // ++++++++++++++++++++++
-    // This is the pose of panda_link8. |br|
-    // From panda_link8 to the palm of the eef the distance is 0.058, the cube starts 0.01 before 5.0 (half of the length
-    // of the cube). |br|
-    // Therefore, the position for panda_link8 = 5 - (length of cube/2 - distance b/w panda_link8 and palm of eef - some
-    // extra padding)
+    // This sets the grasping pose based on an offset between the object and the end effector link that is used by the move_group 
     grasps[0].grasp_pose.header.frame_id = "trina2_1/base_link";
     tf2::Quaternion orientation;
     orientation.setRPY(-M_PI / 2, -M_PI / 4, -M_PI / 2);
@@ -105,9 +101,7 @@ void pick(moveit::planning_interface::MoveGroupInterface &move_group, ros::NodeH
     grasps[0].grasp_pose.pose.position.y = 0;
     grasps[0].grasp_pose.pose.position.z = 0.5;
 
-    // Setting pre-grasp approach
-    // ++++++++++++++++++++++++++
-    /* Defined with respect to frame_id */
+    // Pre-grasp approach is set based on the robot's base frame
     grasps[0].pre_grasp_approach.direction.header.frame_id = "trina2_1/base_link";
     /* Direction is set as positive x axis */
     grasps[0].pre_grasp_approach.direction.vector.x = 1.0;
@@ -115,8 +109,6 @@ void pick(moveit::planning_interface::MoveGroupInterface &move_group, ros::NodeH
     grasps[0].pre_grasp_approach.desired_distance = 0.115;
 
     // Setting post-grasp retreat
-    // ++++++++++++++++++++++++++
-    /* Defined with respect to frame_id */
     grasps[0].post_grasp_retreat.direction.header.frame_id = "trina2_1/base_link";
     /* Direction is set as positive z axis */
     grasps[0].post_grasp_retreat.direction.vector.z = 1.0;
@@ -124,80 +116,63 @@ void pick(moveit::planning_interface::MoveGroupInterface &move_group, ros::NodeH
     grasps[0].post_grasp_retreat.desired_distance = 0.25;
   }
   // Setting posture of eef before grasp
-  // +++++++++++++++++++++++++++++++++++
   openGripper(grasps[0].pre_grasp_posture);
-  // END_SUB_TUTORIAL
 
-  // BEGIN_SUB_TUTORIAL pick2
   // Setting posture of eef during grasp
   // +++++++++++++++++++++++++++++++++++
   closedGripper(grasps[0].grasp_posture);
-  // END_SUB_TUTORIAL
 
-  // BEGIN_SUB_TUTORIAL pick3
-  // Set support surface as table1.
+  // Set support surface as table1.  This allows collisions between the object being grasped and "table1".  
   move_group.setSupportSurfaceName("table1");
   // Call pick to pick up the object using the grasps given
   move_group.pick("object", grasps);
-  // END_SUB_TUTORIAL
 }
 
-// Again, tries a single placement location.  We can use this list to create "failures" in place actions.
+
 void place(moveit::planning_interface::MoveGroupInterface &group)
 {
-  // BEGIN_SUB_TUTORIAL place
-  // TODO(@ridhwanluthra) - Calling place function may lead to "All supplied place locations failed. Retrying last
-  // location in
-  // verbose mode." This is a known issue and we are working on fixing it. |br|
-  // Create a vector of placings to be attempted, currently only creating single place location.
+  // Again, tries a single placement location.  It is possible to pass a vector of positions to increase the likelihood of finding at least one 
+// valid location to put the object down.
   std::vector<moveit_msgs::PlaceLocation> place_location;
   place_location.resize(1);
 
-  // Setting place location pose
-  // +++++++++++++++++++++++++++
+  // Placement pose represents the desired location of the object center
   place_location[0].place_pose.header.frame_id = "trina2_1/base_link";
   tf2::Quaternion orientation;
   orientation.setRPY(0, 0, M_PI / 2);
   place_location[0].place_pose.pose.orientation = tf2::toMsg(orientation);
 
-  /* While placing it is the exact location of the center of the object. */
   place_location[0].place_pose.pose.position.x = 0;
   place_location[0].place_pose.pose.position.y = 0.5;
   place_location[0].place_pose.pose.position.z = 0.5;
 
-  // Setting pre-place approach
-  // ++++++++++++++++++++++++++
-  /* Defined with respect to frame_id */
+  // Set approach to placement
   place_location[0].pre_place_approach.direction.header.frame_id = "trina2_1/base_link";
   /* Direction is set as negative z axis */
   place_location[0].pre_place_approach.direction.vector.z = -1.0;
   place_location[0].pre_place_approach.min_distance = 0.095;
   place_location[0].pre_place_approach.desired_distance = 0.115;
 
-  // Setting post-grasp retreat
-  // ++++++++++++++++++++++++++
-  /* Defined with respect to frame_id */
+  // Set post-grasp retreat
   place_location[0].post_place_retreat.direction.header.frame_id = "trina2_1/base_link";
   /* Direction is set as negative y axis */
   place_location[0].post_place_retreat.direction.vector.y = -1.0;
   place_location[0].post_place_retreat.min_distance = 0.1;
   place_location[0].post_place_retreat.desired_distance = 0.25;
 
-  // Setting posture of eef after placing object
-  // +++++++++++++++++++++++++++++++++++++++++++
-  /* Similar to the pick case */
+  // Set posture of eef after placing object
   openGripper(place_location[0].post_place_posture);
 
   // Set support surface as table2.
   group.setSupportSurfaceName("table2");
   // Call place to place the object using the place locations given.
   group.place("object", place_location);
-  // END_SUB_TUTORIAL
+
 }
 
-// This routine (shamelessly stolen from the MoveIt tutorials) creates collision objects for the robot
-// to interact with in RViz.  We will need to create "real" objects in Gazebo and figure out how to interact
-// with those instead, but this works well for testing manipulation.
+// This routine (directly imported from the MoveIt tutorials, with a few modifications to use TRINA's frame)
+// creates collision objects for the robot to interact with in RViz.  This is much simpler than creating "physical" 
+// objects in Gazebo and works well for early testing and demonstrations.
 void addCollisionObjects(moveit::planning_interface::PlanningSceneInterface &planning_scene_interface)
 {
   // BEGIN_SUB_TUTORIAL table1
@@ -306,28 +281,17 @@ int main(int argc, char **argv)
 
   ros::WallDuration(1.0).sleep();
   moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
-  moveit::planning_interface::MoveGroupInterface arm_group(PLANNING_GROUP); // make generic later
+  moveit::planning_interface::MoveGroupInterface arm_group(PLANNING_GROUP); 
   arm_group.setPlanningTime(45.0);
 
-  // Diagnostics - remove later
+  // Diagnostics 
   if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
   {
     ros::console::notifyLoggerLevelsChanged();
   }
-  // moveit::planning_interface::MoveGroupInterface grip_group(GRIPPER_GROUP);
-  // grip_group.setPlanningTime(45.0);
-  // ROS_INFO_NAMED("tutorial", "Planning frame: %s", arm_group.getPlanningFrame().c_str());
-  // ROS_INFO_NAMED("tutorial", "End effector link: %s", arm_group.getEndEffectorLink().c_str());
-  // ROS_INFO_NAMED("tutorial", "Available Planning Groups:");
-  // std::copy(arm_group.getJointModelGroupNames().begin(), arm_group.getJointModelGroupNames().end(),
-  //         std::ostream_iterator<std::string>(std::cout, ", "));
-  // ROS_INFO_NAMED("tutorial", "Joints in gripper:");
-  // std::copy(grip_group.getJointNames().begin(), grip_group.getJointNames().end(),
-  //         std::ostream_iterator<std::string>(std::cout, ", "));
-  //test_moveit(arm_group);
+
   ros::WallDuration(1.0).sleep();
 
-  // TODO: Create a service that can be called by a button click, then loop.
   addCollisionObjects(planning_scene_interface);
 
   // Wait a bit for ROS things to initialize
