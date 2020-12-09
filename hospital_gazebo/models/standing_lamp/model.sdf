@@ -2,7 +2,7 @@
 <sdf version="1.5">
 
   <model name="standing_lamp">
-    <static>false</static>
+    <static>true</static>
     <link name="link">
 
       <inertial>
@@ -18,10 +18,12 @@
       </inertial>
 
       <collision name="collision">
+        <pose> 0 0 0.85 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://standing_lamp/standing_lamp.dae</uri>
-          </mesh>
+          <cylinder>
+            <radius>0.17</radius>
+            <length>1.7</length>
+          </cylinder>
         </geometry>
       </collision>
 

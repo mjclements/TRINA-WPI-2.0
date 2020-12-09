@@ -101,7 +101,7 @@ void MainWindow::initRviz()
   Global->addChild(FixedFrame);
   // add combox
   QComboBox *frame=new QComboBox();
-  frame->addItem("odom");
+  frame->addItem("trina2_1/odom");
   frame->setEditable(true);
   frame->setMaximumWidth(150);
   ui.rvizTree->setItemWidget(FixedFrame,1,frame);
@@ -194,7 +194,7 @@ void MainWindow::initRviz()
   Laser->addChild(Laser_Topic);
   QComboBox *Laser_Topic_Name=new QComboBox;
   Laser_Topic_Name->setMaximumWidth(150);
-  Laser_Topic_Name->addItem("base_scan");
+  Laser_Topic_Name->addItem("trina2_1/base_scan");
   Laser_Topic_Name->setEditable(true);
   ui.rvizTree->setItemWidget(Laser_Topic,1,Laser_Topic_Name);
 
@@ -219,7 +219,7 @@ void MainWindow::initRviz()
   Map->addChild(Map_Topic);
   QComboBox *Map_Topic_Name=new QComboBox;
   Map_Topic_Name->setMaximumWidth(150);
-  Map_Topic_Name->addItem("map");
+  Map_Topic_Name->addItem("/map");
   Map_Topic_Name->setEditable(true);
   ui.rvizTree->setItemWidget(Map_Topic,1,Map_Topic_Name);
 

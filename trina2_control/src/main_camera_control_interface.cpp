@@ -13,9 +13,9 @@ private:
 public:
     SubscribeAndPublish() {
         //Topic to publish
-        twist_sub_ = n_.subscribe("main_camera_controller/pitch_yaw", 10, &SubscribeAndPublish::process_camera_control, this);
-        yaw_pub_ = n_.advertise<std_msgs::Float64>("main_camera_yaw_controller/command", 1);
-        pitch_pub_ = n_.advertise<std_msgs::Float64>("main_camera_pitch_controller/command", 1);
+        twist_sub_ = n_.subscribe("main_cam_controller/pitch_yaw", 10, &SubscribeAndPublish::process_camera_control, this);
+        yaw_pub_ = n_.advertise<std_msgs::Float64>("main_cam_yaw_controller/command", 1);
+        pitch_pub_ = n_.advertise<std_msgs::Float64>("main_cam_pitch_controller/command", 1);
     }
     ~SubscribeAndPublish() {}
 

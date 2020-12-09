@@ -2,7 +2,7 @@
 <sdf version="1.5">
 
   <model name="ikea_desk">
-    <static>false</static>
+    <static>true</static>
     <link name="link">
 
       <inertial>
@@ -18,10 +18,11 @@
       </inertial>
 
       <collision name="collision">
+        <pose>0 0.03 0.227 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://ikea_desk/ikea_desk.dae</uri>
-          </mesh>
+          <box>
+            <size>0.416 0.98 0.455</size>
+          </box>
         </geometry>
       </collision>
 

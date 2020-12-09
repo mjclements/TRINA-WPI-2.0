@@ -1,9 +1,9 @@
-$(arg right_prefix)robotiq_2f_85_gripper_controller:
+right_arm_robotiq_2f_85_gripper_controller:
     type: position_controllers/GripperActionController
     joint: $(arg right_prefix)finger_joint
     action_monitor_rate: 100
 
-$(arg left_prefix)robotiq_2f_85_gripper_controller:
+left_arm_robotiq_2f_85_gripper_controller:
     type: position_controllers/GripperActionController
     joint: $(arg left_prefix)finger_joint
     action_monitor_rate: 100

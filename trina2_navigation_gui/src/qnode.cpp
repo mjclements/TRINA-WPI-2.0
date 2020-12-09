@@ -43,15 +43,15 @@ bool QNode::init() {
 	ros::NodeHandle n;
 
   // Ros communications.
-  speed_subscriber = n.subscribe<nav_msgs::Odometry>("/base_controller/odom",1,&QNode::speedCallback,this);
-  pose_subscriber = n.subscribe<nav_msgs::Odometry>("/base_controller/odom",1,&QNode::poseCallback,this);
-  laser_subscriber = n.subscribe("/base_scan",1,&QNode::laserCallback,this);
+  speed_subscriber = n.subscribe<nav_msgs::Odometry>("trina2_1/base_controller/odom",1,&QNode::speedCallback,this);
+  pose_subscriber = n.subscribe<nav_msgs::Odometry>("trina2_1/base_controller/odom",1,&QNode::poseCallback,this);
+  laser_subscriber = n.subscribe("trina2_1/base_scan",1,&QNode::laserCallback,this);
 
   image_transport::ImageTransport it_(n);
-  main_cam_subscriber = it_.subscribe("/main_cam/color/image_raw", 1, &QNode::mainCamCallback, this);
-  wide_main_cam_subscriber = it_.subscribe("/main_cam_wide/color/image_raw", 1, &QNode::wideMainCamCallback, this);
-  right_arm_cam_subscriber = it_.subscribe("right_arm_cam/color/image_raw", 1, &QNode::rightArmCamCallback, this);
-  wide_right_arm_cam_subscriber = it_.subscribe("right_arm_cam_wide/color/image_raw", 1, &QNode::wideRightArmCamCallback, this);
+  main_cam_subscriber = it_.subscribe("trina2_1/main_cam/color/image_raw", 1, &QNode::mainCamCallback, this);
+  wide_main_cam_subscriber = it_.subscribe("trina2_1/main_cam_wide/color/image_raw", 1, &QNode::wideMainCamCallback, this);
+  right_arm_cam_subscriber = it_.subscribe("trina2_1/right_arm_cam/color/image_raw", 1, &QNode::rightArmCamCallback, this);
+  wide_right_arm_cam_subscriber = it_.subscribe("trina2_1/right_arm_cam_wide/color/image_raw", 1, &QNode::wideRightArmCamCallback, this);
 
   QStringListModel logging_model;
 

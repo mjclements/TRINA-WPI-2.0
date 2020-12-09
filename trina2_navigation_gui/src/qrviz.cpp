@@ -33,7 +33,7 @@ QRviz::QRviz(QVBoxLayout *layout,QString node_name)
     // Initialize camera type and view
     rviz::ViewManager* vm_ = manager_->getViewManager();
     vm_->setCurrentViewControllerType("rviz/ThirdPersonFollower");
-    vm_->getCurrent()->subProp("Target Frame")->setValue("base_link");
+    vm_->getCurrent()->subProp("Target Frame")->setValue("trina2_1/odom");
     vm_->getCurrent()->subProp("Distance")->setValue("20");
     vm_->getCurrent()->subProp("Pitch")->setValue("1.57");
     vm_->getCurrent()->subProp("Yaw")->setValue("3.14");
@@ -164,7 +164,7 @@ void QRviz::Set_Goal()
     rviz::Property* pro= current_tool->getPropertyContainer();
     pro->subProp("Topic")->setValue("/move_base_simple/goal");
     //set current frame
-    manager_->setFixedFrame("map");
+    manager_->setFixedFrame("/map");
     //set current tool
     tool_manager_->setCurrentTool( current_tool );
 
