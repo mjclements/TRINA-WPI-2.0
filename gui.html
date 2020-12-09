@@ -1,0 +1,195 @@
+<html>
+<head>
+<link rel="stylesheet" href="style.css">
+<script src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.js"></script>
+<script src="http://static.robotwebtools.org/roslibjs/current/roslib.js"></script>
+<script src="https://d3js.org/d3.v6.min.js"></script>
+</head>
+<body>
+
+<div class="grid-container">
+  <div class="Left-Panel">
+    <p id="suggested">Suggested Action </p>
+    <div id="available">
+      <button id="place0">Place Block</button>
+      <button id="pick0">Pick Block 0</button>
+      <button id="pick1">Pick Block 1 </button>
+      <button id="pick2">Pick Block 2</button>
+    </div>  
+    </div>
+  <div class="Bottom-Panel">
+    	<div id="manip actions">
+	<p>Manipulation Actions</p>
+		<table>
+			<tr><td><button id="pause">Pause</button></td>
+				<td><button id="cancel">Cancel</button></td></tr>
+			<tr><td><button id="reset">Reset</button></td>
+				<td><button id="home">Home</button></td></tr>
+		</table>
+	</div>
+
+  </div>
+  <div class="PhotoView">
+    <svg id="aroverlay" >
+    </svg>
+    <img src="image.jpg" id="view" style="width:100%;height:100%"></img>
+  </div>
+  <div class="Right-Panel">
+  <p>Key</p>
+
+  </div>
+</div>
+
+<script>
+  var ros = new ROSLIB.Ros({
+    url : 'ws://localhost:9090'
+  });
+
+var placeClient = new ROSLIB.Service({
+    ros: ros,
+    name : '/trina2_1/trina_place',
+    serviceType : 'pick_and_place'
+  });
+
+var pickClient = new ROSLIB.Service({
+    ros : ros,
+    name : '/trina2_1/trina_pick', //TBD
+    servicetype : 'pick_and_place'
+  });
+
+var recoverClient = new ROSLIB.Service({
+    ros : ros,
+    name: '/trina2_1/trina_recover',
+    serviceType : 'pick_and_place'
+   });
+
+  /** Picks the Nth Block */
+  function pickN(n) {
+	console.log("Picking " + n);
+	let str = "unit_box_" + n;
+	  var request = new ROSLIB.ServiceRequest({
+		pick_obj: str,
+	})
+
+	pickClient.callService(request, (result) =>{ console.log('Result for service call on ' + pickClient.name + ': ' + result)});
+}
+
+
+  /** What to do when the pick button is pressed */
+  function pick0() {
+	pickN(0);
+	}
+	//Attack that to pick button
+	document.getElementById("pick0").onclick = pick0;
+
+
+  function pick1() {
+        pickN(1);
+	}
+	//Attach that to the pick button
+	document.getElementById("pick1").onclick = pick1;
+
+  function pick2() {
+	pickN(2);
+	}
+	//Attack that to the pick2 button
+	document.getElementById("pick2").onclick = pick2;
+
+
+/** What to do when the place button is pressed */
+     function place() {
+	var request = new ROSLIB.ServiceRequest({
+		x : 0.7,
+		y : 0.0
+	})
+	placeClient.callService(request, (result) => console.log(result));
+	}
+	//Attach that to the place button
+	document.getElementById("place0").onclick = place;
+
+
+/** What to do when the reset button is pressed */
+	function reset() {
+	var request = new ROSLIB.ServiceRest({
+		cont : true
+	})
+	recoverClient.callService(request, (result) => console.log(result));
+	}
+
+/** What to do when the pause button is pressed */
+        function cancel() {
+        var request = new ROSLIB.ServiceRest({
+                cont : false
+        })
+        recoverClient.callService(request, (result) => console.log(result));
+        }
+
+	document.getElementById("cancel").onclick = reset;
+
+/** What to do when the 
+
+
+//Attach that to the home button
+	document.getElementById("home").onclick = home();
+
+	/**
+	* Appends a diamond to the SVG overlay. If a shape with the same name already exists, replaces it.
+	* @param svg The ID of the SVG to select (i.e. #aroverlay)
+	* @param name The name of this rectangle. Should NOT include #, altho it will become an ID
+	* @param color The color of the rectangle.
+	* @param x the X coordinate of the rectangle
+	* @param y the Y coordinate of the rectangle
+	* @param size the size of the square
+	*/
+	function appendDiamond(svg,name,color, x, y,size){
+		svg = d3.select(svg);
+		d3.selectAll("#" + name).remove();
+		svg.append("rect")
+		.attr("x",x)
+		.attr("y",y)
+		.attr("id",name)
+		.attr("width",size)
+		.attr("height",size)
+		.style("stroke",color)
+		.style("fill",'none');
+//		.style("stroke-width", "3px");
+	}
+
+        /**
+        * Appends a circle to the SVG overlay. If a shape with the same name already exists, replaces it.
+        * @param svg The ID of the SVG to select (i.e. #aroverlay)
+        * @param name The name of this circle. Should NOT include #, altho it will become an ID
+        * @param color The color of the circle.
+        * @param x the X coordinate of the circle 
+        * @param y the Y coordinate of the circle 
+        * @param size the size of the circle
+        */
+        function appendCircle(svg,name,color, x, y,size){
+                svg = d3.select(svg);
+                d3.selectAll("#" + name).remove();
+                svg.append("circle")
+                .attr("cx",x)
+                .attr("cy",y)
+                .attr("id",name)
+                .attr("r",size)
+                .style("stroke",color)
+                .style("fill",'none');
+//              .style("stroke-width", "3px");
+        }
+
+
+	
+	appendDiamond("#aroverlay","target",'red',50,50,50);
+	appendDiamond("#aroverlay","target",'red',100,50,50);
+	/** Note how this only creates one square! */
+	appendCircle("#aroverlay","market","blue",70,100,30);
+
+  /** Basic error handling for ROS */
+  ros.on('error', function(error) { console.log(error) });
+  ros.on('connection', function() { console.log('connect') } );
+  ros.on('close', function() { console.log('close')});
+
+
+
+</script>
+</body>
